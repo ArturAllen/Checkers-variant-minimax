@@ -15,17 +15,16 @@ SQUARE_SIZE = min(WINDOW_HEIGHT//BOARD_HEIGHT,WINDOW_WIDTH//BOARD_WIDTH)
 BLANK = 0
 BLACK_MAN = 1
 WHITE_MAN = 2
-BLACK_KING = 1
-WHITE_KING = 2
 
 #colors:
-BLACK = 1   # Might be a good idea to make BLACK == BLACK_MAN
+BLACK = 1
 WHITE = 2
 
 player_color = WHITE
 enemy_color  = BLACK
 
-winner = BLANK
+BLACK_PIECE_COLOR = '#1E1E1E'
+WHITE_PIECE_COLOR = '#D5C5B2'
 
 #game states:
 WAITING_PLAYER = 0
@@ -54,7 +53,7 @@ def init_board(width, height):
         board[height-1][width-1-j] = player_color
         board[height-2][width-1-j] = player_color
     
-    return board
+    return np.array(board)
    
     
 player_move = []
@@ -66,25 +65,25 @@ def draw_board():
             x = j * SQUARE_SIZE
             y = i * SQUARE_SIZE
             
-            color = '#A47449'
+            color = '#A47449' # light square color
             if (i+j)%2 == 0:
-                color = '#63462D'
+                color = '#63462D' #dark square color
                 
             pygame.draw.rect(screen, color, pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE))
             
-    if len(last_pc_move) >= 2:
+    if len(last_pc_move) >= 2: # Highlights squares to indicate last PC movement
         (i_from, j_from) = last_pc_move[0]
         (i_to, j_to) = last_pc_move[1]
         
         x = j_from * SQUARE_SIZE
         y = i_from * SQUARE_SIZE
         
-        pygame.draw.rect(screen, 'Red', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE))
+        pygame.draw.rect(screen, '#DC143C', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE)) # Draws redish square
         
         x = j_to * SQUARE_SIZE
         y = i_to * SQUARE_SIZE
         
-        pygame.draw.rect(screen, 'Red', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE))
+        pygame.draw.rect(screen, '#DC143C', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE))
         
         
     if game_state == PIECE_SELECTED:
@@ -99,12 +98,13 @@ def highlight_squares(board):
         (i, j) = s[1]
         x = j * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
         y = i * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
-        pygame.draw.ellipse(screen, '#7f7f7f', pygame.Rect(x, y, piece_size, piece_size))
-        continue
-        x = j * SQUARE_SIZE
-        y = i * SQUARE_SIZE
-        
-        pygame.draw.rect(screen, 'Red', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE))
+        pygame.draw.ellipse(screen, '#D8D8D8', pygame.Rect(x, y, piece_size, piece_size)) # draw gray circles on available squares
+    
+    (i, j) = player_move[0]    
+    x = j * SQUARE_SIZE
+    y = i * SQUARE_SIZE
+    
+    pygame.draw.rect(screen, '#DC143C', pygame.Rect(x, y, SQUARE_SIZE, SQUARE_SIZE)) # draw redish square under selected piece
                
 def draw_pieces(board):
     shp = np.shape(board)
@@ -121,25 +121,11 @@ def draw_pieces(board):
             x = j * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
             y = i * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
         
-            if board[i][j] == BLACK_MAN:
-                pygame.draw.ellipse(screen, 'Black', pygame.Rect(x, y, piece_size, piece_size))
-            
-            elif board[i][j] == BLACK_KING:
-                pygame.draw.ellipse(screen, 'Black', pygame.Rect(x, y, piece_size, piece_size))
-                pygame.draw.ellipse(screen, 'Black', pygame.Rect(x, i * SQUARE_SIZE, piece_size, piece_size))
+            if board[i, j] == BLACK:
+                pygame.draw.ellipse(screen, BLACK_PIECE_COLOR, pygame.Rect(x, y, piece_size, piece_size))
                 
-            elif board[i][j] == WHITE_MAN:
-                pygame.draw.ellipse(screen, 'White', pygame.Rect(x, y, piece_size, piece_size))
-            
-            elif board[i][j] == WHITE_KING:
-                pygame.draw.ellipse(screen, 'White', pygame.Rect(x, y, piece_size, piece_size))
-                pygame.draw.ellipse(screen, 'White', pygame.Rect(x, i * SQUARE_SIZE, piece_size, piece_size))
-        
-    if game_state == PIECE_SELECTED:
-        (i, j) = player_move[0]
-        x = j * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
-        y = i * SQUARE_SIZE + (SQUARE_SIZE - piece_size) // 2
-        pygame.draw.ellipse(screen, 'Red', pygame.Rect(x, y, piece_size, piece_size))
+            elif board[i, j] == WHITE:
+                pygame.draw.ellipse(screen, WHITE_PIECE_COLOR, pygame.Rect(x, y, piece_size, piece_size))
 
 def calculate_available_moves(board, color):
     
@@ -154,48 +140,48 @@ def calculate_available_moves(board, color):
         for i in range(height):
             for j in range(width):
                 
-                if board[i][j] == player_color: 
+                if board[i, j] == player_color: 
                     
                     if j > 0:
-                        if board[i][j-1] == BLANK:
+                        if board[i, j-1] == BLANK:
                             available_moves.append([(i,j), (i,j-1)])
                     
                     if j < width-1:
-                        if board[i][j+1] == BLANK:
+                        if board[i, j+1] == BLANK:
                             available_moves.append([(i,j), (i,j+1)])
                     
                     if j > 1:
-                        if board[i][j-2] == BLANK and board[i][j-1] > BLANK:
+                        if board[i, j-2] == BLANK and board[i, j-1] > BLANK:
                             available_moves.append([(i,j), (i,j-2)])
                     
                     if j < width-2:
-                        if board[i][j+2] == BLANK and board[i][j+1] > BLANK:
+                        if board[i, j+2] == BLANK and board[i, j+1] > BLANK:
                             available_moves.append([(i,j), (i,j+2)])
                         
                     if i > 0:
                     
-                        if board[i-1][j] == BLANK:
+                        if board[i-1, j] == BLANK:
                             available_moves.append([(i,j), (i-1,j)])
                             
                         if j > 0:
-                            if board[i-1][j-1] == BLANK:
+                            if board[i-1, j-1] == BLANK:
                                 available_moves.append([(i,j), (i-1,j-1)])
                             
                         if j < width-1:
-                            if board[i-1][j+1] == BLANK:
+                            if board[i-1, j+1] == BLANK:
                                 available_moves.append([(i,j), (i-1,j+1)])
                     
                     if i > 1:
                     
-                        if board[i-2][j] == BLANK and board[i-1][j] > BLANK:
+                        if board[i-2, j] == BLANK and board[i-1, j] > BLANK:
                             available_moves.append([(i,j), (i-2,j)])
                             
                         if j > 1:
-                            if board[i-2][j-2] == BLANK and board[i-1][j-1] > BLANK:
+                            if board[i-2, j-2] == BLANK and board[i-1, j-1] > BLANK:
                                 available_moves.append([(i,j), (i-2,j-2)])
                             
                         if j < width-2:
-                            if board[i-2][j+2] == BLANK and board[i-1][j+1] > BLANK:
+                            if board[i-2, j+2] == BLANK and board[i-1, j+1] > BLANK:
                                 available_moves.append([(i,j), (i-2,j+2)])
     
     elif color == enemy_color:
@@ -208,45 +194,45 @@ def calculate_available_moves(board, color):
                 if board[i][j] == enemy_color: 
                     
                     if j > 0:
-                        if board[i][j-1] == BLANK:
+                        if board[i, j-1] == BLANK:
                             available_moves.append([(i,j), (i,j-1)])
                     
                     if j < width-1:
-                        if board[i][j+1] == BLANK:
+                        if board[i, j+1] == BLANK:
                             available_moves.append([(i,j), (i,j+1)]) 
                     
                     if j > 1:
-                        if board[i][j-2] == BLANK and board[i][j-1] > BLANK:
+                        if board[i, j-2] == BLANK and board[i, j-1] > BLANK:
                             available_moves.append([(i,j), (i,j-2)])
                     
                     if j < width-2:
-                        if board[i][j+2] == BLANK and board[i][j+1] > BLANK:
+                        if board[i, j+2] == BLANK and board[i, j+1] > BLANK:
                             available_moves.append([(i,j), (i,j+2)])
                 
                     if i < height-1:
                     
-                        if board[i+1][j] == BLANK:
+                        if board[i+1, j] == BLANK:
                             available_moves.append([(i,j), (i+1,j)])
                             
                         if j > 0:
-                            if board[i+1][j-1] == BLANK:
+                            if board[i+1, j-1] == BLANK:
                                 available_moves.append([(i,j), (i+1,j-1)])
                             
                         if j < width-1:
-                            if board[i+1][j+1] == BLANK:
+                            if board[i+1, j+1] == BLANK:
                                 available_moves.append([(i,j), (i+1,j+1)])
                         
                         if i < height-2:
                         
-                            if board[i+2][j] == BLANK and board[i+1][j] > BLANK:
+                            if board[i+2, j] == BLANK and board[i+1, j] > BLANK:
                                 available_moves.append([(i,j), (i+2,j)])
                                 
                             if j > 1:
-                                if board[i+2][j-2] == BLANK and board[i+1][j-1] > BLANK:
+                                if board[i+2, j-2] == BLANK and board[i+1, j-1] > BLANK:
                                     available_moves.append([(i,j), (i+2,j-2)])
                                 
                             if j < width-2:
-                                if board[i+2][j+2] == BLANK and board[i+1][j+1] > BLANK:
+                                if board[i+2, j+2] == BLANK and board[i+1, j+1] > BLANK:
                                     available_moves.append([(i,j), (i+2,j+2)])
     
     return available_moves
@@ -255,23 +241,20 @@ def is_move_valid(board, move):
     
     (i_from, j_from) = move[0]
     
-    color = board[i_from][j_from]
+    color = board[i_from, j_from]
     
     return move in calculate_available_moves(board, color)
 
 def play_move(board, move):
     global game_state
-#    board_cpy = board.copy()
     board_cpy = deepcopy(board)
    
     (i_from, j_from) = move[0]
     (i_to, j_to) = move[1]
     
-    board_cpy[i_to][j_to] = board_cpy[i_from][j_from]
+    board_cpy[i_to, j_to] = board_cpy[i_from, j_from]
     
-    board_cpy[i_from][j_from] = BLANK
-    
-    #print('Current score is: ', evaluate(board_cpy))
+    board_cpy[i_from, j_from] = BLANK
     
     return board_cpy
     
@@ -285,45 +268,16 @@ def count_winning_pieces(board, color):
     if color == enemy_color:
         for i in range(height-2, height):
             for j in range(width // 2, width):
-                if board[i][j] == enemy_color:
+                if board[i, j] == enemy_color:
                     winning_pieces += 1
                             
     else:
         for i in range(0, 2):
             for j in range(0, width // 2):
-                if board[i][j] == player_color:
+                if board[i, j] == player_color:
                     winning_pieces += 1
                     
     return winning_pieces
-    
-def evaluate2(board):
-    shp = np.shape(board)
-    height = shp[0]
-    width = shp[1]
-    
-    enemy_count = count_winning_pieces(board, enemy_color)
-    player_count = count_winning_pieces(board, player_color)
-    
-    if enemy_count == 8:
-        return float('inf')
-    if player_count == 8:
-        return float('-inf')
-    
-    avg_enemy_distance = 0
-    for i in range(0, height):
-        for j in range(0, width):
-            if board[i][j] == enemy_color:
-                avg_enemy_distance += abs(i - (height-1)) + abs(j - (width-1)) # manhatan distance
-    avg_enemy_distance = avg_enemy_distance / 8
-    
-    avg_player_distance = 0
-    for i in range(0, height):
-        for j in range(0, width):
-            if board[i][j] == player_color:
-                avg_player_distance += i + j # manhatan distance
-    avg_player_distance = avg_player_distance / 8
-                
-    return (enemy_count - player_count) - 0.1 * (avg_enemy_distance - avg_player_distance)
     
 def evaluate(board):
     shp = np.shape(board)
@@ -337,12 +291,48 @@ def evaluate(board):
     
     for i in range(0, height):
         for j in range(0, width):
-            if board[i][j] == enemy_color:
+
+            if board[i, j] == enemy_color:
+                if i >= height - 2 and j >= width // 2:
+                    winning_enemy_count += 1    
+                avg_enemy_distance += (height-1) - i + (width-1) - j # manhatan distance
+            
+            elif board[i, j] == player_color:
+                if i <= 1 and j < width // 2:
+                    winning_player_count += 1
+                avg_player_distance += i + j # manhatan distance
+    
+    if winning_enemy_count >= 8:
+        return 1000
+        #return float('inf')
+        
+    if winning_player_count >= 8:
+        return -1000
+        #return float('-inf')
+    
+    avg_enemy_distance = avg_enemy_distance / 8
+    avg_player_distance = avg_player_distance / 8
+                
+    return 1.25 * (winning_enemy_count - winning_player_count) - 2.5 * (avg_enemy_distance - avg_player_distance)
+    
+def evaluate2(board):
+    shp = np.shape(board)
+    height = shp[0]
+    width = shp[1]
+    
+    winning_enemy_count = 0
+    avg_enemy_distance = 0
+    winning_player_count = 0
+    avg_player_distance = 0
+    
+    for i in range(0, height):
+        for j in range(0, width):
+            if board[i, j] == enemy_color:
                 if i >= height - 2 and j >= width // 2:
                     winning_enemy_count += 1
                 else:
                     avg_enemy_distance += (height-1) - i + (width-1) - j # manhatan distance
-            elif board[i][j] == player_color:
+            elif board[i, j] == player_color:
                 if i <= 1 and j < width // 2:
                     winning_player_count += 1
                 else:
@@ -359,7 +349,7 @@ def evaluate(board):
     avg_enemy_distance = avg_enemy_distance / (8 - winning_enemy_count)
     avg_player_distance = avg_player_distance / (8 - winning_player_count)
                 
-    return 0.5 * (winning_enemy_count - winning_player_count) - 0.1 * (avg_enemy_distance - avg_player_distance)
+    return 1.25 * (winning_enemy_count - winning_player_count) - 2.5 * (avg_enemy_distance - avg_player_distance)
 
 def winner(board):
     if count_winning_pieces(board, enemy_color) == 8:
@@ -379,10 +369,10 @@ def minimax(board, is_maximizer, depth):
         
     if is_maximizer:
         
-        best_move = []
-        best_value = float('-inf')
-        
         available_moves = calculate_available_moves(board, enemy_color)
+        
+        best_move = play_move(board, available_moves[-1]) # placeholder movement
+        best_value = float('-inf')
         
         for move in available_moves:
             value, _ = minimax(play_move(board, move), False, depth-1)
@@ -393,18 +383,15 @@ def minimax(board, is_maximizer, depth):
         
                 if depth == MINIMAX_MAX_DEPTH:
                     last_pc_move = move
-        
-        if best_move == []:
-            best_move = play_move(board, available_moves[-1])
             
         return best_value, best_move
         
     else:
         
-        best_move = []
-        best_value = float('inf')
-        
         available_moves = calculate_available_moves(board, player_color)
+        
+        best_move = play_move(board, available_moves[-1]) # placeholder movement
+        best_value = float('inf')
         
         for move in available_moves:
             value, _ = minimax(play_move(board, move), True, depth-1)
@@ -413,23 +400,11 @@ def minimax(board, is_maximizer, depth):
                 best_value = value
                 best_move = play_move(board, move)
         
-        if best_move == []:
-            best_move = play_move(board, available_moves[-1])
-        
         return best_value, best_move
 
 def pc_move(board):
 
     return minimax(board, True, MINIMAX_MAX_DEPTH)[1]
-    
-    pc_moves = calculate_available_moves(board, enemy_color)
-    
-    #print(pc_moves)
-    
-    if pc_moves:
-        return play_move(board, pc_moves[-1])
-    
-    return board
         
                 
 def event_loop():
@@ -452,7 +427,7 @@ def event_loop():
              
              if game_state == WAITING_PLAYER:
                 
-                if board[i][j] == player_color:
+                if board[i, j] == player_color:
                     player_move.append((i,j))
                     game_state = PIECE_SELECTED
              
@@ -464,10 +439,10 @@ def event_loop():
                     player_move = []
                     game_state = WAITING_PLAYER
                     
-                elif board[i][j] == player_color:
+                elif board[i, j] == player_color:
                     player_move = [(i,j)]
                     
-                elif board[i][j] == BLANK:
+                elif board[i, j] == BLANK:
                 
                     player_move.append((i,j))
                     
@@ -478,6 +453,9 @@ def event_loop():
                         #game_state = WAITING_PLAYER
                     else:
                         player_move.pop()
+                        
+             elif game_state == BLACK_VICTORY or game_state == WHITE_VICTORY:
+                game_state = START_SCREEN
                      
 
 pygame.init()
@@ -491,53 +469,76 @@ def draw_splash_screen():
     x = SQUARE_SIZE * 3 + (SQUARE_SIZE - piece_size) // 2
     y = SQUARE_SIZE * 3 + (SQUARE_SIZE - piece_size) // 2
 
-    pygame.draw.ellipse(screen, 'Black', pygame.Rect(x, y, piece_size, piece_size))
+    pygame.draw.ellipse(screen, BLACK_PIECE_COLOR, pygame.Rect(x, y, piece_size, piece_size))
 
     x += SQUARE_SIZE
     y += SQUARE_SIZE
 
-    pygame.draw.ellipse(screen, 'White', pygame.Rect(x, y, piece_size, piece_size))
+    pygame.draw.ellipse(screen, WHITE_PIECE_COLOR, pygame.Rect(x, y, piece_size, piece_size))
 
-draw_splash_screen()
-pygame.display.update()
-
-while game_state == START_SCREEN:
-    for event in pygame.event.get():
-        
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
-            
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-             (x, y) = event.pos
-             game_state = WAITING_PLAYER
-             
-             if y < WINDOW_HEIGHT // 2:
-                player_color = BLACK
-                enemy_color  = WHITE
-                game_state = PC_TURN
-
-
-board = init_board(BOARD_WIDTH, BOARD_HEIGHT)
-
+    test_font = pygame.font.SysFont('Arial', 35)
+    
+    initial_message = test_font.render('Choose your pieces',False,'#F5F5F5')
+    initial_message_rect = initial_message.get_rect(center = (WINDOW_WIDTH//2, WINDOW_HEIGHT//4))
+    screen.blit(initial_message,initial_message_rect)
 
 while True:
+    
+    last_pc_move = []
 
-    if winner(board) != BLANK:
-        game_state = BLACK_VICTORY
-        if winner(board) == WHITE:
-            game_state = WHITE_VICTORY
-    
-    draw_board()
-    draw_pieces(board)
-    
-    event_loop()
-    
-    if game_state == PC_TURN:
-        board = pc_move(board)
-        game_state = WAITING_PLAYER
-        print(evaluate(board))
-    
-    clock.tick(60)
+    draw_splash_screen()
     pygame.display.update()
     
+    while game_state == START_SCREEN:
+        for event in pygame.event.get():
+            
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+                
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                 (x, y) = event.pos
+                 game_state = WAITING_PLAYER
+                 
+                 if y < WINDOW_HEIGHT // 2:
+                    player_color = BLACK
+                    enemy_color  = WHITE
+                    game_state = PC_TURN
+
+
+    board = init_board(BOARD_WIDTH, BOARD_HEIGHT)
+
+
+    while game_state != START_SCREEN:
+
+        draw_board()
+        draw_pieces(board)
+        
+        if winner(board) != BLANK: 
+            game_state = BLACK_VICTORY
+            winner_str = 'Black'
+            
+            if winner(board) == WHITE:
+                game_state = WHITE_VICTORY
+                winner_str = 'White'
+        
+            test_font = pygame.font.SysFont('Arial', 35)
+    
+            end_message_1 = test_font.render(winner_str + ' won',False,'#F5F5F5')
+            end_message_rect_1 = end_message_1.get_rect(midbottom = (WINDOW_WIDTH//2, WINDOW_HEIGHT//2))
+            screen.blit(end_message_1,end_message_rect_1)
+    
+            end_message_1 = test_font.render('Click the screen to play again',False,'#F5F5F5')
+            end_message_rect_1 = end_message_1.get_rect(midtop = (WINDOW_WIDTH//2, WINDOW_HEIGHT//2))
+            screen.blit(end_message_1,end_message_rect_1)
+        
+        event_loop()
+        
+        if game_state == PC_TURN:
+            board = pc_move(board)
+            game_state = WAITING_PLAYER
+            #print(evaluate(board))
+        
+        clock.tick(60)
+        pygame.display.update()
+        
