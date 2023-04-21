@@ -2,6 +2,7 @@ import pygame
 from sys import exit
 import numpy as np
 from copy import deepcopy
+from math import hypot
 
 WINDOW_HEIGHT = 600
 WINDOW_WIDTH  = 600
@@ -54,7 +55,6 @@ def init_board(width, height):
         board[height-2][width-1-j] = player_color
     
     return np.array(board)
-   
     
 player_move = []
 last_pc_move = []
@@ -295,59 +295,22 @@ def evaluate(board):
             if board[i, j] == enemy_color:
                 if i >= height - 2 and j >= width // 2:
                     winning_enemy_count += 1    
-                avg_enemy_distance += (height-1) - i + (width-1) - j # manhatan distance
+#                avg_enemy_distance += (height-1) - i + (width-1) - j # manhatan distance
+                avg_enemy_distance += hypot((height-1) - i, (width-1) - j) # euclidian distance
             
             elif board[i, j] == player_color:
                 if i <= 1 and j < width // 2:
                     winning_player_count += 1
-                avg_player_distance += i + j # manhatan distance
+                avg_player_distance += hypot(i, j) # manhatan distance
     
     if winning_enemy_count >= 8:
         return 1000
-        #return float('inf')
         
     if winning_player_count >= 8:
         return -1000
-        #return float('-inf')
     
     avg_enemy_distance = avg_enemy_distance / 8
     avg_player_distance = avg_player_distance / 8
-                
-    return 1.25 * (winning_enemy_count - winning_player_count) - 2.5 * (avg_enemy_distance - avg_player_distance)
-    
-def evaluate2(board):
-    shp = np.shape(board)
-    height = shp[0]
-    width = shp[1]
-    
-    winning_enemy_count = 0
-    avg_enemy_distance = 0
-    winning_player_count = 0
-    avg_player_distance = 0
-    
-    for i in range(0, height):
-        for j in range(0, width):
-            if board[i, j] == enemy_color:
-                if i >= height - 2 and j >= width // 2:
-                    winning_enemy_count += 1
-                else:
-                    avg_enemy_distance += (height-1) - i + (width-1) - j # manhatan distance
-            elif board[i, j] == player_color:
-                if i <= 1 and j < width // 2:
-                    winning_player_count += 1
-                else:
-                    avg_player_distance += i + j # manhatan distance
-    
-    if winning_enemy_count >= 8:
-        return 1000
-        #return float('inf')
-        
-    if winning_player_count >= 8:
-        return -1000
-        #return float('-inf')
-    
-    avg_enemy_distance = avg_enemy_distance / (8 - winning_enemy_count)
-    avg_player_distance = avg_player_distance / (8 - winning_player_count)
                 
     return 1.25 * (winning_enemy_count - winning_player_count) - 2.5 * (avg_enemy_distance - avg_player_distance)
 
